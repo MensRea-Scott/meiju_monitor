@@ -22,6 +22,7 @@ def main():
 
     #dispatch major functions
     while True:
+    #TODO 150410: re-write this part using multi-threading
         sleep = False
         for i in tgt_series:
             ###inits data for detect_new()
@@ -47,7 +48,7 @@ def main():
                         update_log(j,db_file)
                     else:
                         sleep = True #means should sleep for another round of check
-        if sleep:
+        if sleep: #means at least 1 episode needs sleep and recheck
             time.sleep(3600)
             continue
         else:
@@ -65,7 +66,7 @@ def detect_new(objTgt, lstDB):
         else: #got a new episode
             new = 1
             temp = i.split('-')
-            new_episode([temp[0],temp[1],results[i]]) #[season, episode, link]
+            new_episode.append([temp[0],temp[1],results[i]]) #[season, episode, link]
     if new:
         return new_episode
     else:
