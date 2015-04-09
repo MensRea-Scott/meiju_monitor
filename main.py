@@ -111,13 +111,13 @@ def get_weekday():
     else:
         raise ValueError, 'Weekday Error'
 
-def output(parse_result, output_file):
-    #output results from page_parser to local file
-    #import os.path,os
-    n=parse_result
-    f=open(output_file,'a')
-    f.write("season:{0},episode:{1},link:{2}\n".format(n[0],n[1],n[2]))
-    f.close()
+#def output(parse_result, output_file):
+#    #output results from page_parser to local file
+#    #import os.path,os
+#    n=parse_result
+#    f=open(output_file,'a')
+#    f.write("season:{0},episode:{1},link:{2}\n".format(n[0],n[1],n[2]))
+#    f.close()
 
 
 if __name__=="__main__":
