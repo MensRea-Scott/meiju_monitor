@@ -8,14 +8,7 @@ db_path = r'.\db'
 def main():
     import os.path,time
     ###read config files and load up target series
-
     tgt_series = load_config() #tested okay on 2015/4/13
-
-    #weekday = get_weekday()
-    #config_file = open(os.path.join(config_path,weekday+'.txt'))
-    #tgt_series = [] #loads all target series
-    #for line in config_file:
-    #    tgt_series.append(line.replace('\n',''))
     ###complete
 
 
@@ -25,32 +18,21 @@ def main():
         sleep = False
         for i in tgt_series:
             ###inits data for detect_new()
-            #TODO 150410: put initiation into a function
             tgt = web_utils.meiju(i.lower()) #an object
-
-            #db = []
-            #db_file = open(os.path.join(db_path,i+'.txt'))
-            #for line in db_file: #NOTE: line read from a file ends with \n in default
-            #    try:    
-            #        tmp = line.replace('\n','').split(';;;')
-            #        db.append("{0}-{1}".format(tmp[0],tmp[1]))
-            #    except: #if the file is empty, codes goes here and db=[]
-            #        continue
-            #db_file.close()
-
             db = db_init(i.lower(),db_path) #in the format of "xx-xx" (string) -> season-episode
+            ###all data initiated
 
-            ####all data initiated
             n=detect_new(tgt,db)
 
-            if n: #means has new episodes, a list [season, episode, link]
+            if n: #means has new episodes, a list of [season, episode, link]
                 for j in n:
                     new_episode = web_utils.tgt_episode(j[2])
                     if new_episode.update_check():
-                        invoke_notify(i) #notify on locating new episode
+                        invoke_notify(i) #notify on locating new episode with exact links updated
                         update_log(j,os.path.join(db_path,i+'.txt'))
                     else:
-                        sleep = True #means should sleep for another round of check
+                        sleep = True #means new upisode have not been updated with links, and _
+                        #should sleep for another round of check
         if sleep: #means at least 1 episode needs sleep and recheck
             time.sleep(3600)
             continue
@@ -112,10 +94,10 @@ def invoke_notify(name):
     import win32com.client, datetime
 
     now = datetime.datetime.now()
-    tgt_time = datetime.datetime.isoformat(now).split('T')[1] #gets time at hh:mm:ss.xxx
+    tgt_time = datetime.datetime.isoformat(now).split('T')[1].split('.')[0] #gets time at hh:mm:ss.xxx
 
     wsh=win32com.client.DispatchEx('WScript.Shell')
-    wsh.popup('New {0} episode found at {1}'.format(name,tgt_time))
+    wsh.popup('new {0} episode found at {1}'.format(name.upper(),tgt_time))
 
 def update_log(log, db_file):
     #update the log
