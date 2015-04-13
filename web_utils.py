@@ -1,6 +1,6 @@
 #encoding: utf-8
 
-class meiju(object):
+class meiju(object): #tested on on 2015/4/13
     def __init__(self, series_name):
         self.name = series_name.lower()
         #self.db_path = db_path.lower()
@@ -45,7 +45,7 @@ class meiju(object):
 
     pass
 
-class tgt_episode(object):
+class tgt_episode(object): #tested okay on 2015/4/13
     #this is the target episode to be watched.
     def __init__(self, link):
         #self.name = name
@@ -69,11 +69,12 @@ class tgt_episode(object):
 
         page = self.get_page().decode('gb2312')
        
-        pattern = r'大小：[\s\S]+>(.+M)</td>'.decode('utf-8')
+        pattern = r'大小：[\s\S]+>(.+M|.+G)</td>'.decode('utf-8') #!!!THIS IS IMPORTANT FOR PYTHON RE!!!
+        #NOTE 150413: some episodes may be noted as x.xxG
         try:
             tmp = re.search(pattern,page).group(1) #finds out whether its _
-            #xxx M, which means actually updated, or M, which means not updated
-            if re.search(r'[0-9]+',tmp) is None:
+            #xxx M/G, which means actually updated, or M/G, which means not updated
+            if re.search(r'[0-9\.]+',tmp) is None:
                 return 0 #means not updated
             else:
                 return 1 #means updated

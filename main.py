@@ -1,24 +1,23 @@
 #encoding: utf-8
 
-import web_utils, parser
+import web_utils, page_parser
 
 config_path = r'.\config'
 db_path = r'.\db'
 
-
-
-
-
 def main():
     import os.path,time
     ###read config files and load up target series
-    weekday = get_weekday()
-    config_file = open(os.path.join(config_path,weekday+'.txt'))
-    #tgt_series = [line for line in config_file] 
-    tgt_series = [] #loads all target series
-    for line in config_file:
-        tgt_series.append(line.replace('\n',''))
+
+    tgt_series = load_config() #tested okay on 2015/4/13
+
+    #weekday = get_weekday()
+    #config_file = open(os.path.join(config_path,weekday+'.txt'))
+    #tgt_series = [] #loads all target series
+    #for line in config_file:
+    #    tgt_series.append(line.replace('\n',''))
     ###complete
+
 
     #dispatch major functions
     while True:
@@ -28,24 +27,28 @@ def main():
             ###inits data for detect_new()
             #TODO 150410: put initiation into a function
             tgt = web_utils.meiju(i.lower()) #an object
-            db = []
-            db_file = open(os.path.join(db_path,i+'.txt'))
-            for line in db_file: #NOTE: line read from a file ends with \n in default
-                try:    
-                    tmp = line.replace('\n','').split(';;;')
-                    db.append("{0}-{1}".format(tmp[0],tmp[1]))
-                except: #if the file is empty, codes goes here and db=[]
-                    continue
-            db_file.close()
+
+            #db = []
+            #db_file = open(os.path.join(db_path,i+'.txt'))
+            #for line in db_file: #NOTE: line read from a file ends with \n in default
+            #    try:    
+            #        tmp = line.replace('\n','').split(';;;')
+            #        db.append("{0}-{1}".format(tmp[0],tmp[1]))
+            #    except: #if the file is empty, codes goes here and db=[]
+            #        continue
+            #db_file.close()
+
+            db = db_init(i.lower(),db_path) #in the format of "xx-xx" (string) -> season-episode
+
             ####all data initiated
             n=detect_new(tgt,db)
 
-            if n: #means has new episodes, a list-> [[season,episode,link],...]
+            if n: #means has new episodes, a list [season, episode, link]
                 for j in n:
                     new_episode = web_utils.tgt_episode(j[2])
                     if new_episode.update_check():
                         invoke_notify(i) #notify on locating new episode
-                        update_log(j,db_file)
+                        update_log(j,os.path.join(db_path,i+'.txt'))
                     else:
                         sleep = True #means should sleep for another round of check
         if sleep: #means at least 1 episode needs sleep and recheck
@@ -54,10 +57,43 @@ def main():
         else:
             break
 
+def load_config():
+    #load config files for each day
+    import os.path
+    weekday = get_weekday()
+    config_file = open(os.path.join(config_path,weekday+'.txt'))
+    tgt_series = [] #loads all target series
+    for line in config_file:
+        tgt_series.append(line.replace('\n',''))
+    return tgt_series
+
+def db_init(series_name, path = db_path):
+    #initiates database for each series
+    import os.path
+    db=[]
+    #db_file = open(os.path.join(path, series_name+'.txt'),'r+')
+    db_file_path = os.path.join(path, series_name+'.txt')
+    if os.path.lexists(db_file_path):
+        db_file = open(db_file_path,'r')
+        for line in db_file: #NOTE: line read from a file ends with \n in default
+            try:    
+                tmp = line.replace('\n','').split(';;;')
+                db.append("{0}-{1}".format(tmp[0],tmp[1]))
+            except: #if the file is empty, codes goes here and db=[]
+                continue
+        db_file.close()
+    else:
+        f=open(db_file_path,'a')
+        f.close()
+        db = []
+
+    return db
+
 
 def detect_new(objTgt, lstDB):
     #determines if there is a new episode on given day
-    results = parser.page_parser(objTgt) #parsed result from page
+    import page_parser
+    results = page_parser.page_parser(objTgt) #parsed result from page
     new = 0
     new_episode=[] 
     for i in results: #each result is in the form of {'season-episode':link}
@@ -86,15 +122,15 @@ def update_log(log, db_file):
     f = open(db_file,'a')
     #formats the log from [season,episode,link]
     content = ';;;'.join(log)
-    f.write(content)
+    f.write(content+'\n')
     f.close()
     
 
 
 def get_weekday():
     import datetime
-    today = datetime.date.today()
-    tmp_weekday = datetime.date.isoweekday(today)
+    tmp_today = datetime.date.today()
+    today = datetime.date.isoweekday(tmp_today)
     if today==1:
         return 'monday'
     elif today==2:
@@ -110,7 +146,7 @@ def get_weekday():
     elif today==7:
         return 'sunday'
     else:
-        raise ValueError, 'Weekday Error'
+        raise ValueError, 'Weekday Error, result={0}'.format(today)
 
 #def output(parse_result, output_file):
 #    #output results from page_parser to local file

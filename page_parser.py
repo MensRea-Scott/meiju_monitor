@@ -1,6 +1,6 @@
 #encoding: utf-8
 
-def page_parser(objPage):
+def page_parser(objPage): #tested okay on 2015/4/13
     #parse page and get key information
     from bs4 import BeautifulSoup
     import re
